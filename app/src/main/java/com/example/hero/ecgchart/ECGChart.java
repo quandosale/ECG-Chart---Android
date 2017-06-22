@@ -1,5 +1,6 @@
 package com.example.hero.ecgchart;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -10,6 +11,8 @@ import android.graphics.Point;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -18,6 +21,7 @@ import java.util.TimerTask;
 import java.util.Vector;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
+import android.widget.LinearLayout;
 
 /**
  * Created by hero on 6/22/2017.
@@ -39,6 +43,7 @@ public class ECGChart extends View {
     private Activity mActivity;
 
     private int mGraphMode = 1;
+    private boolean mFullscreen = false;
 
     public ECGChart(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -99,7 +104,7 @@ public class ECGChart extends View {
                         }
 
                         invalidate();
-                        Log.d("inputBufSize", mInputBuf.size() + "");
+//                        Log.d("inputBufSize", mInputBuf.size() + "");
                     }
                 });
             }
@@ -137,5 +142,16 @@ public class ECGChart extends View {
     private void checkBufOverflow() {
         if(mInputBuf.size() > 2000)
             mInputBuf.clear();
+    }
+
+    public void toggleFullscreen() {
+        mFullscreen = !mFullscreen;
+        if(mFullscreen) {
+            setRotation(90);
+            this.setLayoutParams(new LinearLayout.LayoutParams(300, 600));
+        } else {
+            setRotation(0);
+        }
+        invalidate();
     }
 }
