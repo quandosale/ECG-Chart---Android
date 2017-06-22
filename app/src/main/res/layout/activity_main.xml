@@ -12,14 +12,6 @@
         android:orientation="vertical"
         tools:layout_editor_absoluteY="8dp"
         tools:layout_editor_absoluteX="8dp">
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Hello World!"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
         <com.example.hero.ecgchart.ECGChart
             android:layout_marginLeft="14dp"
             android:layout_marginRight="14dp"
@@ -31,16 +23,12 @@
             custom:lineColor="#00ff00"
             custom:grid="false"
             custom:windowSize="1000"/>
-        <com.example.hero.ecgchart.ECGChart
-            android:layout_marginLeft="14dp"
-            android:layout_marginRight="14dp"
-            android:layout_marginTop="24dp"
-            android:background="#333333"
-            android:id="@+id/ecg_flow_chart"
-            android:layout_height="200dp"
+
+        <Button
+            android:id="@+id/button2"
             android:layout_width="match_parent"
-            custom:graphMode="1"
-            custom:lineColor="#ffffff"
-            custom:windowSize="1000"/>
+            android:layout_height="wrap_content"
+            android:onClick="toggleZoom"
+            android:text="Button" />
     </LinearLayout>
 </android.support.constraint.ConstraintLayout>

@@ -3,6 +3,8 @@ package com.example.hero.ecgchart;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 
 import java.util.Date;
 import java.util.Random;
@@ -11,7 +13,6 @@ import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
     private ECGChart mECGSweepChart;
-    private ECGChart mECGFlowChart;
 
     Random rand = new Random();
 
@@ -21,7 +22,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mECGSweepChart = (ECGChart) findViewById(R.id.ecg_sweep_chart);
-        mECGFlowChart = (ECGChart) findViewById(R.id.ecg_flow_chart);
         new Thread() {
             public void run() {
                 int counter = 0;
@@ -43,7 +43,6 @@ public class MainActivity extends AppCompatActivity {
                                     angle += interval;
                                 }
                                 mECGSweepChart.addEcgData(ecgArray);
-                                mECGFlowChart.addEcgData(ecgArray);
                             }
                         });
                         Thread.sleep(1000);
@@ -53,5 +52,11 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }.start();
+        final Button button = (Button)findViewById(R.id.button2);
+        button.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                mECGSweepChart.toggleFullscreen();
+            }
+        });
     }
 }
