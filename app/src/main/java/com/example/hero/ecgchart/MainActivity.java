@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
 
                             @Override
                             public void run() {
-                                int inputSize = 240;
+                                int inputSize = 100;
                                 int[] ecgArray = new int[inputSize];
                                 double angle = 0;
                                 double interval = Math.PI / inputSize * 2;

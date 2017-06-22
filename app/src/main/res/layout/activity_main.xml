@@ -19,9 +19,9 @@
             android:id="@+id/ecg_sweep_chart"
             android:layout_height="200dp"
             android:layout_width="match_parent"
-            custom:graphMode="0"
+            custom:graphMode="1"
             custom:lineColor="#00ff00"
-            custom:grid="false"
+            custom:grid="true"
             custom:windowSize="1000"/>
 
         <Button

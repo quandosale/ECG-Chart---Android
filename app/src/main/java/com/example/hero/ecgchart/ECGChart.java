@@ -29,6 +29,9 @@ import android.widget.LinearLayout;
  */
 
 public class ECGChart extends View {
+    private int mRedrawInterval = 50;
+    private int mRedrawPoints;
+
     static final int SWEEP_MODE = 0;
     static final int FLOW_MODE = 1;
     private int mLineColor;
@@ -36,7 +39,7 @@ public class ECGChart extends View {
     private int mArrowColor;
 
     private int mWindowSize;
-    private final int ONEWINDOW = 240;
+    private int ONEWINDOW = 240;
     private LinkedBlockingDeque<Integer> mInputBuf;
     private Vector<Integer> mDrawingBuf;
 
@@ -55,12 +58,9 @@ public class ECGChart extends View {
     private Activity mActivity;
 
     private int mGraphMode = 1;
-<<<<<<< HEAD
     private boolean mGrid = true;
     private boolean mArrow = false;
-=======
     private boolean mFullscreen = false;
->>>>>>> 1379301e424a22c714c6f20fd767cf452948345e
 
     public ECGChart(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -115,11 +115,10 @@ public class ECGChart extends View {
     }
 
     private void init() {
+        mRedrawPoints = ONEWINDOW / (1000 / mRedrawInterval);
         for (int i = 0; i < mWindowSize; i++)
             mDrawingBuf.add(1250);
 
-        int redrawInterval = 50;
-        final int redrawPoints = ONEWINDOW / (1000 / redrawInterval);
         TimerTask drawEmitter = new TimerTask() {
             @Override
             public void run() {
@@ -129,14 +128,14 @@ public class ECGChart extends View {
                         if (mInputBuf.size() < ONEWINDOW)
                             return;
                         if (mGraphMode == SWEEP_MODE) {
-                            for (int i = 0; i < redrawPoints; i++) {
+                            for (int i = 0; i < mRedrawPoints; i++) {
                                 int val = mInputBuf.pollFirst();
                                 mDrawingBuf.remove(mDrawPosition);
                                 mDrawingBuf.add(mDrawPosition++, val);
                                 if (mDrawPosition >= mWindowSize) mDrawPosition = 0;
                             }
                         } else {
-                            for (int i = 0; i < redrawPoints; i++) {
+                            for (int i = 0; i < mRedrawPoints; i++) {
                                 int val = mInputBuf.pollFirst();
                                 mDrawingBuf.remove(0);
                                 mDrawingBuf.add(val);
@@ -150,7 +149,7 @@ public class ECGChart extends View {
             }
         };
         Timer timer = new Timer();
-        timer.schedule(drawEmitter, 0, redrawInterval);
+        timer.schedule(drawEmitter, 0, mRedrawInterval);
     }
 
     @Override
@@ -245,6 +244,9 @@ public class ECGChart extends View {
         for (int i = 0; i < data.length; i++) {
             mInputBuf.addLast(data[i]);
         }
+        ONEWINDOW = data.length;
+        mWindowSize = ONEWINDOW * 3;
+        mRedrawPoints = ONEWINDOW / (1000 / mRedrawInterval);
     }
 
     private void checkBufOverflow() {
