@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="ECGChart">
+        <attr name="lineColor" format="color" />
+        <attr name="windowSize" format="integer" />
+        <attr name="graphMode" format="integer" />
+    </declare-styleable>
+</resources>
