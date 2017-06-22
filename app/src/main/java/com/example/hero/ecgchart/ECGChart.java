@@ -24,8 +24,8 @@ import java.util.concurrent.LinkedBlockingDeque;
  */
 
 public class ECGChart extends View {
-    final int SWEEP_MODE = 0;
-    final int FLOW_MODE = 1;
+    static final int SWEEP_MODE = 0;
+    static final int FLOW_MODE = 1;
     private int mLineColor;
     private int mWindowSize;
     private final int ONEWINDOW = 240;
@@ -134,7 +134,7 @@ public class ECGChart extends View {
             mInputBuf.addLast(data[i]);
         }
     }
-    public void checkBufOverflow() {
+    private void checkBufOverflow() {
         if(mInputBuf.size() > 2000)
             mInputBuf.clear();
     }

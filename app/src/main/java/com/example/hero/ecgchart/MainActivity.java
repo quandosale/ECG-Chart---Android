@@ -10,7 +10,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
-    private ECGChart mECGChart;
+    private ECGChart mECGSweepChart;
+    private ECGChart mECGFlowChart;
 
     Random rand = new Random();
 
@@ -19,7 +20,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mECGChart = (ECGChart) findViewById(R.id.ecg_chart);
+        mECGSweepChart = (ECGChart) findViewById(R.id.ecg_sweep_chart);
+        mECGFlowChart = (ECGChart) findViewById(R.id.ecg_flow_chart);
         new Thread() {
             public void run() {
                 int counter = 0;
@@ -40,7 +42,8 @@ public class MainActivity extends AppCompatActivity {
                                     ecgArray[i] = (int)(Math.sin(angle) * randHeight + 1250);
                                     angle += interval;
                                 }
-                                mECGChart.addEcgData(ecgArray);
+                                mECGSweepChart.addEcgData(ecgArray);
+                                mECGFlowChart.addEcgData(ecgArray);
                             }
                         });
                         Thread.sleep(1000);
