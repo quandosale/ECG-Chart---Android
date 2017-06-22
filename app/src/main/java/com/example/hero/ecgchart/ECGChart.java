@@ -6,6 +6,7 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Point;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -27,22 +28,35 @@ public class ECGChart extends View {
     static final int SWEEP_MODE = 0;
     static final int FLOW_MODE = 1;
     private int mLineColor;
+    private int mGridColor;
+    private int mArrowColor;
+
     private int mWindowSize;
     private final int ONEWINDOW = 240;
     private LinkedBlockingDeque<Integer> mInputBuf;
     private Vector<Integer> mDrawingBuf;
 
     private Paint mPaint;
+
+    private Paint mPaintGrid;
+    private Paint mPaintRuler;
+    private Paint mPaintArrow;
+
+
+    private Paint mPaintSmallGrid;
+
     private Paint mMaskBarPaint;
     private int mDrawPosition;
 
     private Activity mActivity;
 
     private int mGraphMode = 1;
+    private boolean mGrid = true;
+    private boolean mArrow = false;
 
     public ECGChart(Context context, AttributeSet attrs) {
         super(context, attrs);
-        mActivity = (Activity)context;
+        mActivity = (Activity) context;
         TypedArray a = context.getTheme().obtainStyledAttributes(
                 attrs,
                 R.styleable.ECGChart,
@@ -50,7 +64,14 @@ public class ECGChart extends View {
 
         try {
             mLineColor = a.getColor(R.styleable.ECGChart_lineColor, Color.WHITE);
-            mGraphMode = a.getColor(R.styleable.ECGChart_graphMode, SWEEP_MODE);
+            mGridColor = a.getColor(R.styleable.ECGChart_gridColor, Color.argb(0x33, 0x00, 0xFF, 0x00));
+            mArrowColor = a.getColor(R.styleable.ECGChart_arrowColor, Color.rgb(255, 255, 255));
+
+
+            mGraphMode = a.getInt(R.styleable.ECGChart_graphMode, SWEEP_MODE);
+            mGrid = a.getBoolean(R.styleable.ECGChart_grid, true);
+            mArrow = a.getBoolean(R.styleable.ECGChart_arrow, false);
+
             mWindowSize = a.getColor(R.styleable.ECGChart_windowSize, ONEWINDOW * 3);
 
             mInputBuf = new LinkedBlockingDeque<>();
@@ -58,9 +79,26 @@ public class ECGChart extends View {
 
             mPaint = new Paint();
             mPaint.setAntiAlias(true);
+            mPaint.setStrokeWidth(2f);
             mPaint.setColor(mLineColor);
+
+            mPaintGrid = new Paint();
+            mPaintGrid.setColor(mGridColor);
+            mPaintGrid.setStrokeWidth(2f);
+            mPaintSmallGrid = new Paint();
+            mPaintSmallGrid.setColor(mGridColor);
+            mPaintSmallGrid.setStrokeWidth(1f);
+
+            mPaintArrow = new Paint();
+            mPaintArrow.setColor(mArrowColor);
+            mPaintArrow.setStrokeWidth(2);
+            mPaintArrow.setStyle(Paint.Style.FILL);
+
+            mPaintRuler = new Paint();
+            mPaintRuler.setColor(Color.argb(0xAA, 0xFF, 0xFF, 0xFF));
+
             mMaskBarPaint = new Paint();
-            mMaskBarPaint.setColor(Color.rgb(0x33,0x33,0x33));
+            mMaskBarPaint.setColor(Color.rgb(0x33, 0x33, 0x33));
             mMaskBarPaint.setStyle(Paint.Style.FILL);
         } finally {
             a.recycle();
@@ -69,29 +107,28 @@ public class ECGChart extends View {
     }
 
     private void init() {
-        for(int i = 0 ; i < mWindowSize; i++)
+        for (int i = 0; i < mWindowSize; i++)
             mDrawingBuf.add(1250);
 
         int redrawInterval = 50;
-        final int redrawPoints = ONEWINDOW / (1000/redrawInterval);
+        final int redrawPoints = ONEWINDOW / (1000 / redrawInterval);
         TimerTask drawEmitter = new TimerTask() {
             @Override
             public void run() {
                 mActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        if(mInputBuf.size() < ONEWINDOW)
+                        if (mInputBuf.size() < ONEWINDOW)
                             return;
-                        if(mGraphMode == SWEEP_MODE) {
-                            for(int i = 0 ; i < redrawPoints; i++) {
+                        if (mGraphMode == SWEEP_MODE) {
+                            for (int i = 0; i < redrawPoints; i++) {
                                 int val = mInputBuf.pollFirst();
                                 mDrawingBuf.remove(mDrawPosition);
-                                mDrawingBuf.add(mDrawPosition ++, val);
-                                if(mDrawPosition >= mWindowSize) mDrawPosition = 0;
+                                mDrawingBuf.add(mDrawPosition++, val);
+                                if (mDrawPosition >= mWindowSize) mDrawPosition = 0;
                             }
-                        }
-                        else {
-                            for(int i = 0 ; i < redrawPoints; i++) {
+                        } else {
+                            for (int i = 0; i < redrawPoints; i++) {
                                 int val = mInputBuf.pollFirst();
                                 mDrawingBuf.remove(0);
                                 mDrawingBuf.add(val);
@@ -115,27 +152,95 @@ public class ECGChart extends View {
         float width = this.getWidth();
         float height = this.getHeight();
 
-        if(mDrawingBuf.size() < mWindowSize)
+        if (mDrawingBuf.size() < mWindowSize)
             return;
 
-        float mapRatio = (float)width / mWindowSize;
+        float mapRatio = (float) width / mWindowSize;
         int start = mDrawingBuf.get(0);
-        for(int i = 1 ; i < mWindowSize; i ++) {
+//        if (mGraphMode == FLOW_MODE)
+        for (int i = 1; i < mWindowSize; i++) {
             int end = mDrawingBuf.get(i);
-            canvas.drawLine(i * mapRatio, start / 2500.f * height, (i + 1) * mapRatio, end / 2500.f * height , mPaint);
+            canvas.drawLine(i * mapRatio, start / 2500.f * height, (i + 1) * mapRatio, end / 2500.f * height, mPaint);
             start = end;
         }
-        if(mGraphMode == SWEEP_MODE)
-            canvas.drawRect((mDrawPosition-5) * mapRatio, 0, (mDrawPosition + 5) * mapRatio, height, mMaskBarPaint);
+
+        if (mGraphMode == SWEEP_MODE)
+            canvas.drawRect((mDrawPosition - 5) * mapRatio, 0, (mDrawPosition + 5) * mapRatio, height, mMaskBarPaint);
+        if (mGrid)
+            drawGridLine(canvas);
     }
+
+    public void drawGridLine(Canvas canvas) {
+        float width = this.getWidth();
+        float height = this.getHeight();
+        int gridXNumber = 10;
+        int gridYNumber = 6;
+        for (int i = 0; i < gridXNumber; i++) {
+            canvas.drawLine(i * width / gridXNumber, 0, i * width / gridXNumber, height, mPaintGrid);
+//            String text = i + "";
+//            float txtWidth = mPaintRuler.measureText(text);
+//            canvas.drawText(text, i * width / gridXNumber - txtWidth / 2f, height - 4, mPaintRuler);
+        }
+
+        for (int i = 0; i < gridXNumber; i++) {
+            for (int j = 0; j < 10; j++)
+                canvas.drawLine(i * width / gridXNumber + j * width / gridXNumber / 10f, 0,
+                        i * width / gridXNumber + j * width / gridXNumber / 10f, height, mPaintSmallGrid);
+        }
+
+        for (int i = 0; i < gridYNumber; i++) {
+            canvas.drawLine(0, i * height / gridYNumber, width, i * height / gridYNumber, mPaintGrid);
+//            canvas.drawT
+        }
+
+        for (int i = 0; i < gridYNumber; i++) {
+            for (int j = 0; j < 10; j++)
+                canvas.drawLine(0, i * height / gridYNumber + j * height / gridYNumber / 10f,
+                        width, i * height / gridYNumber + j * height / gridYNumber / 10f, mPaintSmallGrid);
+        }
+        float pX = 10;
+        float pY = height - 10;
+        float dx = width / gridXNumber;
+        float dy = height / gridYNumber;
+        canvas.drawLine(pX, pY, pX, pY - dy + 5, mPaintArrow);
+        canvas.drawLine(pX, pY, pX + dx - 5, pY, mPaintArrow);
+
+        Path path = new Path();
+
+        path.moveTo(0, -10);
+        path.lineTo(5, 0);
+        path.lineTo(-5, 0);
+        path.close();
+
+        Path path2 = new Path();
+
+        path2.moveTo(10, 0);
+        path2.lineTo(0, 5);
+        path2.lineTo(0, -5);
+        path2.close();
+
+        path.offset(pX, pY - dy + 5);
+        path2.offset(pX + dx - 5, pY);
+
+        canvas.drawPath(path, mPaintArrow);
+        canvas.drawPath(path2, mPaintArrow);
+        mPaintArrow.setStrokeWidth(1);
+        mPaintArrow.setAntiAlias(true);
+        if (mArrow) {
+            canvas.drawText("500 mA", pX + 8, pY - 10, mPaintArrow);
+            canvas.drawText("300 ms", pX + 8, pY - dy + 5, mPaintArrow);
+        }
+    }
+
     public void addEcgData(int[] data) {
         checkBufOverflow();
-        for(int i = 0 ; i < data.length; i++) {
+        for (int i = 0; i < data.length; i++) {
             mInputBuf.addLast(data[i]);
         }
     }
+
     private void checkBufOverflow() {
-        if(mInputBuf.size() > 2000)
+        if (mInputBuf.size() > 2000)
             mInputBuf.clear();
     }
 }
